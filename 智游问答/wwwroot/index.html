@@ -1,0 +1,231 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="author" content="StarIn">
+    <title>智游问答</title>
+    <link rel="stylesheet" href="./bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./all.css">
+    <style>
+        .navbar-title span {
+            margin-right: 10px;
+        }
+
+        .dropdown-menu {
+            margin-top: -1px;
+            z-index: 3!important;
+        }
+
+        .media img {
+            height: 64px;
+            width: 64px;
+            border-radius: 50%;
+        }
+
+        .media {
+            border-bottom: 1px solid skyblue;
+            padding: 5px 5px 20px;
+        }
+
+        .media-footering {
+            color: #888686;
+            font-size: 18px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="row">
+                <div class="navbar-title">
+                    <a href="#" class="navbar-brand">智游教育</a>
+                    <div class="navbar-title pull-right">
+                        <span id="ask">
+                            <span class="glyphicon glyphicon-user" id=""></span>提问
+                        </span>
+                        <span id="user" data-toggle="dropdown">
+                            <span class="glyphicon glyphicon-plus"></span>
+                            <span class="login_use">登录</span>
+                        </span>
+                        <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
+                            <li role="presentation">
+                                <a role="menuitem" tabindex="-1" href="#">个人资料</a>
+                            </li>
+                            <li class="divider" role="presentation"></li>
+                            <li role="presentation">
+                                <a role="menuitem" tabindex="-1" href="#" id="outLogin">退出登录</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+
+    <!-- 放置模态框 -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">退出登录</h4>
+                </div>
+                <div class="modal-body">
+                    在这里添加一些文本
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 问题回答区域 -->
+    <div class="container questions">
+        <!-- <div class="media">
+            <a class="media-left" href="#">
+                <img class="media-object" src=""
+                     alt="媒体对象">
+            </a>
+            <div class="media-body">
+                <h4 class="media-heading">媒体标题</h4>
+                这是一些示例文本。这是一些示例文本。 这是一些示例文本。这是一些示例文本。 这是一些示例文本。这是一些示例文本。 这是一些示例文本。这是一些示例文本。 这是一些示例文本。这是一些示例文本。
+            </div>
+        </div> -->
+    </div>
+ 
+    <script src="./bootstrap/js/jquery.js"></script>
+    <script src="./bootstrap/js/bootstrap.js"></script>
+    <script src="./bootstrap/js/jquery.cookie.js"></script>
+    <script>
+        var username = $.cookie('username');
+        $('#user').click(function () {
+            // cookie存在 , 直接显示用户名 , 不存在 跳转登录页面
+            // 获取cookie
+            // 判断cookie是否存在
+            if (username) {
+                $('#user').find('span').last().text(username);
+            } else {
+                $('#user').find('span').last().text('登录').parent().removeAttr('data-toggle').click(function () {
+                    location.href = 'login.html'
+                })
+            }
+
+        })
+
+        $('#ask').click(function () {
+            location.href = './ask.html'
+        })
+
+        $('form').submit(function (e) {
+            e.preventDefault();
+            $.post(this.action
+                , $(this).serialize(), (data) => {
+                    $('.modal-body').html(data.msg);
+                    // hide.bs.modal  模态框消失之后 , 要执行的事件
+                    $('#myModal').modal('show').on('hide.bs.modal', function () {
+                        if (data.code == 0) {
+                            location.href = './register.html'
+                        }
+                        if (data.code == 1) {
+                            location.href = './index.html'
+                        }
+                    })
+                })
+        })
+
+        $('#outLogin').click(function (e) {
+            e.preventDefault();
+            $.get('/user/out', (data) => {
+                $('.modal-body').html(data.msg);
+                // hide.bs.modal  模态框消失之后 , 要执行的事件
+                $('#myModal').modal('show').on('hide.bs.modal', function () {
+                    location.href = '/'
+                })
+            })
+        })
+        function setTime(time) {
+            var time = new Date(time);
+            var y = time.getFullYear();
+            var m = time.getMonth() + 1;
+            var d = time.getDate();
+            var h = time.getHours();
+            var mm = time.getMinutes();
+            mm = mm < 10 ? '0' + mm : mm;
+            var s = time.getSeconds();
+            s = s < 10 ? '0' + s : s;
+            return y + '-' + m + '-' + d + ' ' + h + ':' + mm + ':' + s;
+        }
+
+        function setIp(ip) {
+            if (ip.startsWith('::1')) {
+                return 'localhost'
+            }
+        }
+
+        $.get('/user/all', (data) => {
+            var StrHtml = ``
+            for (var i = 0; i < data.length; i++) {
+                var question = data[i];
+                StrHtml += `<div class="media" data-question='${question.time}'>
+                 <div class="pull-left">
+                     <img src="./img/${question.username}.jpg" onerror="defaultImg(this)"/>
+                 </div>
+                 <div class="media-body">
+                     <h4 class="media-heading">${question.username}
+                     </h4>${question.content}
+                 </div >
+                 <div class="media-footing">
+                     <span>${setTime(question.time)}</span>
+                     <span>${setIp(question.ip)}</span>
+                 </div>
+                 </div>`;
+                if (question.answer) {
+                    for (var j = 0; j < question.answer.length; j++) {
+                        var answer = question.answer[j]
+                        console.log(question.answer);
+                        StrHtml += `<div class="media">
+                            <div class="pull-right">
+                                <img src="./img/${answer.username}.jpg" onerror="defaultImg(this)"/>
+                            </div>
+                            <div class="media-body">
+                                <h4 class="media-heading">${answer.username}
+                                </h4>${answer.content}
+                            </div >
+                            <div class="media-footing">
+                                <span>${setTime(answer.time)}</span>
+                                <span>${setIp(answer.ip)}</span>
+                            </div>
+                            </div>`
+                    }
+                }
+
+            }
+
+            $('.questions').html(StrHtml)
+
+        })
+
+        $('.questions').on('click', '.media[data-question]', function () {
+            // alert('回答到'+$(this).attr('data-question'));
+            // 要将question存到cookie中去
+           if(username){
+            $.cookie('question', $(this).data('question'));
+            location.href = 'answer.html';
+           }
+           else{
+               location.href = './login.html'
+           }
+        })
+
+
+        // 设置默认图片 
+        function defaultImg(img){
+            $(img).attr('src','user.jpg')
+        }
+    </script>
+</body>
+
+</html>
